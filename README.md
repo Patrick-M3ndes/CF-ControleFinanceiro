@@ -56,7 +56,16 @@ Sistema web completo de Gestão Financeira Pessoal com integração ao Firebase 
 
 ### 5. Configurar config.js
 
-O arquivo `config.js` já está configurado com as credenciais do Firebase. Se precisar alterar, edite o arquivo diretamente.
+Edite o arquivo `config.js` e substitua os placeholders pelas credenciais que você copiou do Console do Firebase:
+
+```javascript
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_PROJETO.firebaseapp.com",
+  projectId: "SEU_PROJETO",
+  // ... rest of config
+};
+```
 
 ## ▶️ Como Rodar Localmente
 

@@ -4,13 +4,13 @@ import { getAuth } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-aut
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAv9TDFXJCyLfOd0NXmbATRMDTSiaSZHHU",
-  authDomain: "controle-financeiro-ac968.firebaseapp.com",
-  projectId: "controle-financeiro-ac968",
-  storageBucket: "controle-financeiro-ac968.firebasestorage.app",
-  messagingSenderId: "627854378922",
-  appId: "1:627854378922:web:37f81d9855ae08073c8dd3",
-  measurementId: "G-W2XPSEBS42"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_PROJETO.firebaseapp.com",
+  projectId: "SEU_PROJETO",
+  storageBucket: "SEU_PROJETO.firebasestorage.app",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID",
+  measurementId: "SEU_MEASUREMENT_ID"
 };
 
 // Inicializa Firebase

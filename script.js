@@ -1,4 +1,4 @@
-// Import Firebase modules from config.js
+// script.js - Lógica principal do Controle Financeiro
 import { auth, db } from './config.js';
 import { 
   createUserWithEmailAndPassword, 
@@ -18,6 +18,15 @@ import {
   serverTimestamp 
 } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
+import { 
+  formatCurrency, 
+  formatDate, 
+  capitalizeFirst, 
+  escapeHtml, 
+  showToast, 
+  toggleLoading 
+} from './utils.js';
+
 // State
 let currentUser = null;
 let currentMonth = new Date();
@@ -32,12 +41,12 @@ const screens = {
 
 // ==================== AUTHENTICATION ====================
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   if (user) {
     showScreen('app');
     document.getElementById('user-email').textContent = user.email;
-    loadAllData();
+    await loadAllData();
   } else {
     showScreen('login');
   }
@@ -48,11 +57,14 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
   
+  toggleLoading(true);
   try {
     await signInWithEmailAndPassword(auth, email, password);
     showToast('Login realizado com sucesso!', 'success');
   } catch (error) {
     showToast('Erro no login: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
   }
 });
 
@@ -67,11 +79,14 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     return;
   }
   
+  toggleLoading(true);
   try {
     await createUserWithEmailAndPassword(auth, email, password);
     showToast('Conta criada com sucesso!', 'success');
   } catch (error) {
     showToast('Erro ao criar conta: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
   }
 });
 
@@ -110,16 +125,16 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 
 // ==================== MONTH NAVIGATION ====================
 
-document.getElementById('prev-month').addEventListener('click', () => {
+document.getElementById('prev-month').addEventListener('click', async () => {
   currentMonth.setMonth(currentMonth.getMonth() - 1);
   updateMonthDisplay();
-  loadAllData();
+  await loadAllData();
 });
 
-document.getElementById('next-month').addEventListener('click', () => {
+document.getElementById('next-month').addEventListener('click', async () => {
   currentMonth.setMonth(currentMonth.getMonth() + 1);
   updateMonthDisplay();
-  loadAllData();
+  await loadAllData();
 });
 
 function updateMonthDisplay() {
@@ -130,9 +145,13 @@ function updateMonthDisplay() {
 function getMonthRange(date) {
   const year = date.getFullYear();
   const month = date.getMonth();
-  const startDate = new Date(year, month, 1);
-  const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+  const startDate = new Date(year, month, 1).toISOString().split('T')[0];
+  const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
   return { startDate, endDate };
+}
+
+function getYearMonthKey() {
+  return `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
 }
 
 // ==================== DATA LOADING ====================
@@ -140,17 +159,24 @@ function getMonthRange(date) {
 async function loadAllData() {
   if (!currentUser) return;
   
+  toggleLoading(true);
   const { startDate, endDate } = getMonthRange(currentMonth);
   
-  await Promise.all([
-    loadReceitas(startDate, endDate),
-    loadFixas(startDate, endDate),
-    loadVariaveis(startDate, endDate),
-    loadMetas(),
-    loadInvestimentos(startDate, endDate)
-  ]);
-  
-  updateDashboard();
+  try {
+    await Promise.all([
+      loadReceitas(startDate, endDate),
+      loadFixas(),
+      loadVariaveis(startDate, endDate),
+      loadMetas(),
+      loadInvestimentos(startDate, endDate)
+    ]);
+    
+    await updateDashboard();
+  } catch (error) {
+    showToast('Erro ao carregar dados: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
+  }
 }
 
 // ==================== RECEITAS ====================
@@ -197,77 +223,93 @@ document.getElementById('add-receita-btn').addEventListener('click', () => {
 
 document.getElementById('form-receita').addEventListener('submit', async (e) => {
   e.preventDefault();
+  toggleLoading(true);
   
-  await addDoc(collection(db, 'receitas'), {
-    userId: currentUser.uid,
-    descricao: document.getElementById('receita-desc').value,
-    valor: parseFloat(document.getElementById('receita-valor').value),
-    data: document.getElementById('receita-data').value,
-    tipo: document.getElementById('receita-tipo').value,
-    createdAt: serverTimestamp()
-  });
-  
-  closeModal('modal-receita');
-  e.target.reset();
-  loadAllData();
-  showToast('Receita adicionada!', 'success');
+  try {
+    await addDoc(collection(db, 'receitas'), {
+      userId: currentUser.uid,
+      descricao: document.getElementById('receita-desc').value,
+      valor: parseFloat(document.getElementById('receita-valor').value),
+      data: document.getElementById('receita-data').value,
+      tipo: document.getElementById('receita-tipo').value,
+      createdAt: serverTimestamp()
+    });
+    
+    closeModal('modal-receita');
+    e.target.reset();
+    await loadAllData();
+    showToast('Receita adicionada!', 'success');
+  } catch (error) {
+    showToast('Erro ao salvar: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
+  }
 });
 
 window.deleteReceita = async (id) => {
   if (confirm('Tem certeza que deseja excluir?')) {
-    await deleteDoc(doc(db, 'receitas', id));
-    loadAllData();
-    showToast('Receita excluída!', 'success');
+    toggleLoading(true);
+    try {
+      await deleteDoc(doc(db, 'receitas', id));
+      await loadAllData();
+      showToast('Receita excluída!', 'success');
+    } catch (error) {
+      showToast('Erro ao excluir: ' + error.message, 'error');
+    } finally {
+      toggleLoading(false);
+    }
   }
 };
 
 // ==================== DESPESAS FIXAS ====================
 
-async function loadFixas(startDate, endDate) {
-  const q = query(
-    collection(db, 'fixas'),
-    where('userId', '==', currentUser.uid)
+async function loadFixas() {
+  // 1. Carrega todas as despesas fixas do usuário
+  const qFixas = query(collection(db, 'fixas'), where('userId', '==', currentUser.uid));
+  const snapFixas = await getDocs(qFixas);
+  const allFixas = snapFixas.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  
+  // 2. Carrega os pagamentos realizados NESTE mês
+  const monthKey = getYearMonthKey();
+  const qPagos = query(
+    collection(db, 'pagamentos_fixas'), 
+    where('userId', '==', currentUser.uid),
+    where('mesReferencia', '==', monthKey)
   );
-  
-  const snapshot = await getDocs(q);
-  const fixas = [];
-  snapshot.forEach(doc => fixas.push({ id: doc.id, ...doc.data() }));
-  
-  // Filter by month based on vencimento
-  const month = currentMonth.getMonth() + 1;
-  const monthFixas = fixas.filter(f => {
-    const vencimento = parseInt(f.vencimento);
-    return true; // Show all fixed expenses, filter by payment status in month
-  });
+  const snapPagos = await getDocs(qPagos);
+  const idsPagos = snapPagos.docs.map(doc => doc.data().fixaId);
   
   const container = document.getElementById('fixas-list');
   const totalElement = document.getElementById('fixed-total');
   
-  const total = monthFixas.reduce((sum, f) => sum + parseFloat(f.valor), 0);
+  const total = allFixas.reduce((sum, f) => sum + parseFloat(f.valor), 0);
   totalElement.textContent = formatCurrency(total);
   
-  if (monthFixas.length === 0) {
+  if (allFixas.length === 0) {
     container.innerHTML = '<div class="empty-state"><i class="fas fa-home"></i><p>Nenhuma despesa fixa cadastrada</p></div>';
     return;
   }
   
-  container.innerHTML = monthFixas.map(f => `
-    <div class="transaction-item ${f.status}">
-      <div class="item-info">
-        <h4>${escapeHtml(f.nome)}</h4>
-        <p>Vence dia ${f.vencimento} • ${f.status === 'pago' ? 'Pago' : 'Pendente'}</p>
+  container.innerHTML = allFixas.map(f => {
+    const isPago = idsPagos.includes(f.id);
+    return `
+      <div class="transaction-item ${isPago ? 'pago' : 'pendente'}">
+        <div class="item-info">
+          <h4>${escapeHtml(f.nome)}</h4>
+          <p>Vence dia ${f.vencimento} • ${isPago ? 'Pago' : 'Pendente'}</p>
+        </div>
+        <span class="item-value negativo">-${formatCurrency(f.valor)}</span>
+        <div class="item-actions">
+          <button class="btn-action toggle" onclick="toggleFixaStatus('${f.id}', ${isPago})" title="Marcar como ${isPago ? 'pendente' : 'pago'}">
+            <i class="fas ${isPago ? 'fa-undo' : 'fa-check'}"></i>
+          </button>
+          <button class="btn-action delete" onclick="deleteFixa('${f.id}')">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
       </div>
-      <span class="item-value negativo">-${formatCurrency(f.valor)}</span>
-      <div class="item-actions">
-        <button class="btn-action toggle" onclick="toggleFixaStatus('${f.id}', '${f.status}')" title="Marcar como ${f.status === 'pago' ? 'pendente' : 'pago'}">
-          <i class="fas fa-check"></i>
-        </button>
-        <button class="btn-action delete" onclick="deleteFixa('${f.id}')">
-          <i class="fas fa-trash"></i>
-        </button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 document.getElementById('add-fixa-btn').addEventListener('click', () => {
@@ -276,34 +318,83 @@ document.getElementById('add-fixa-btn').addEventListener('click', () => {
 
 document.getElementById('form-fixa').addEventListener('submit', async (e) => {
   e.preventDefault();
+  toggleLoading(true);
   
-  await addDoc(collection(db, 'fixas'), {
-    userId: currentUser.uid,
-    nome: document.getElementById('fixa-nome').value,
-    valor: parseFloat(document.getElementById('fixa-valor').value),
-    vencimento: document.getElementById('fixa-vencimento').value,
-    status: document.getElementById('fixa-status').value,
-    createdAt: serverTimestamp()
-  });
-  
-  closeModal('modal-fixa');
-  e.target.reset();
-  loadAllData();
-  showToast('Despesa fixa adicionada!', 'success');
+  try {
+    await addDoc(collection(db, 'fixas'), {
+      userId: currentUser.uid,
+      nome: document.getElementById('fixa-nome').value,
+      valor: parseFloat(document.getElementById('fixa-valor').value),
+      vencimento: document.getElementById('fixa-vencimento').value,
+      createdAt: serverTimestamp()
+    });
+    
+    closeModal('modal-fixa');
+    e.target.reset();
+    await loadAllData();
+    showToast('Despesa fixa adicionada!', 'success');
+  } catch (error) {
+    showToast('Erro ao salvar: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
+  }
 });
 
-window.toggleFixaStatus = async (id, currentStatus) => {
-  const newStatus = currentStatus === 'pago' ? 'pendente' : 'pago';
-  await updateDoc(doc(db, 'fixas', id), { status: newStatus });
-  loadAllData();
-  showToast('Status atualizado!', 'success');
+window.toggleFixaStatus = async (fixaId, isPago) => {
+  toggleLoading(true);
+  const monthKey = getYearMonthKey();
+  
+  try {
+    if (isPago) {
+      // Remover registro de pagamento
+      const q = query(
+        collection(db, 'pagamentos_fixas'), 
+        where('userId', '==', currentUser.uid),
+        where('mesReferencia', '==', monthKey),
+        where('fixaId', '==', fixaId)
+      );
+      const snap = await getDocs(q);
+      const deletePromises = snap.docs.map(d => deleteDoc(doc(db, 'pagamentos_fixas', d.id)));
+      await Promise.all(deletePromises);
+      showToast('Status alterado para pendente', 'success');
+    } else {
+      // Adicionar registro de pagamento
+      await addDoc(collection(db, 'pagamentos_fixas'), {
+        userId: currentUser.uid,
+        fixaId: fixaId,
+        mesReferencia: monthKey,
+        dataPagamento: serverTimestamp()
+      });
+      showToast('Pagamento registrado!', 'success');
+    }
+    await loadAllData();
+  } catch (error) {
+    showToast('Erro ao atualizar status: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
+  }
 };
 
 window.deleteFixa = async (id) => {
-  if (confirm('Tem certeza que deseja excluir?')) {
-    await deleteDoc(doc(db, 'fixas', id));
-    loadAllData();
-    showToast('Despesa fixa excluída!', 'success');
+  if (confirm('Tem certeza que deseja excluir? (Isso removerá a despesa de todos os meses)')) {
+    toggleLoading(true);
+    try {
+      // 1. Deletar a despesa fixa
+      await deleteDoc(doc(db, 'fixas', id));
+      
+      // 2. Opcional: Limpar histórico de pagamentos dela
+      const q = query(collection(db, 'pagamentos_fixas'), where('fixaId', '==', id));
+      const snap = await getDocs(q);
+      const deletePromises = snap.docs.map(d => deleteDoc(doc(db, 'pagamentos_fixas', d.id)));
+      await Promise.all(deletePromises);
+      
+      await loadAllData();
+      showToast('Despesa fixa excluída!', 'success');
+    } catch (error) {
+      showToast('Erro ao excluir: ' + error.message, 'error');
+    } finally {
+      toggleLoading(false);
+    }
   }
 };
 
@@ -324,10 +415,9 @@ async function loadVariaveis(startDate, endDate) {
   const container = document.getElementById('variaveis-list');
   const alertBox = document.getElementById('variaveis-alert');
   
-  // Calculate total variable expenses and check against income
   const totalVariavel = variaveis.reduce((sum, v) => sum + parseFloat(v.valor), 0);
   
-  // Get total income for the month
+  // Get total income for the month for the alert
   const receitasQ = query(
     collection(db, 'receitas'),
     where('userId', '==', currentUser.uid),
@@ -337,7 +427,6 @@ async function loadVariaveis(startDate, endDate) {
   const receitasSnapshot = await getDocs(receitasQ);
   const totalReceitas = receitasSnapshot.docs.reduce((sum, doc) => sum + doc.data().valor, 0);
   
-  // Show alert if variable expenses > 20% of income
   if (totalReceitas > 0 && totalVariavel > (totalReceitas * 0.2)) {
     alertBox.classList.remove('hidden');
   } else {
@@ -381,27 +470,41 @@ document.getElementById('add-variavel-btn').addEventListener('click', () => {
 
 document.getElementById('form-variavel').addEventListener('submit', async (e) => {
   e.preventDefault();
+  toggleLoading(true);
   
-  await addDoc(collection(db, 'variaveis'), {
-    userId: currentUser.uid,
-    descricao: document.getElementById('variavel-desc').value,
-    valor: parseFloat(document.getElementById('variavel-valor').value),
-    categoria: document.getElementById('variavel-categoria').value,
-    data: document.getElementById('variavel-data').value,
-    createdAt: serverTimestamp()
-  });
-  
-  closeModal('modal-variavel');
-  e.target.reset();
-  loadAllData();
-  showToast('Despesa variável adicionada!', 'success');
+  try {
+    await addDoc(collection(db, 'variaveis'), {
+      userId: currentUser.uid,
+      descricao: document.getElementById('variavel-desc').value,
+      valor: parseFloat(document.getElementById('variavel-valor').value),
+      categoria: document.getElementById('variavel-categoria').value,
+      data: document.getElementById('variavel-data').value,
+      createdAt: serverTimestamp()
+    });
+    
+    closeModal('modal-variavel');
+    e.target.reset();
+    await loadAllData();
+    showToast('Despesa variável adicionada!', 'success');
+  } catch (error) {
+    showToast('Erro ao salvar: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
+  }
 });
 
 window.deleteVariavel = async (id) => {
   if (confirm('Tem certeza que deseja excluir?')) {
-    await deleteDoc(doc(db, 'variaveis', id));
-    loadAllData();
-    showToast('Despesa variável excluída!', 'success');
+    toggleLoading(true);
+    try {
+      await deleteDoc(doc(db, 'variaveis', id));
+      await loadAllData();
+      showToast('Despesa variável excluída!', 'success');
+    } catch (error) {
+      showToast('Erro ao excluir: ' + error.message, 'error');
+    } finally {
+      toggleLoading(false);
+    }
   }
 };
 
@@ -463,27 +566,41 @@ document.getElementById('add-meta-btn').addEventListener('click', () => {
 
 document.getElementById('form-meta').addEventListener('submit', async (e) => {
   e.preventDefault();
+  toggleLoading(true);
   
-  await addDoc(collection(db, 'metas'), {
-    userId: currentUser.uid,
-    nome: document.getElementById('meta-nome').value,
-    valor: parseFloat(document.getElementById('meta-valor').value),
-    guardado: parseFloat(document.getElementById('meta-guardado').value) || 0,
-    economia: parseFloat(document.getElementById('meta-economia').value) || null,
-    createdAt: serverTimestamp()
-  });
-  
-  closeModal('modal-meta');
-  e.target.reset();
-  loadAllData();
-  showToast('Meta adicionada!', 'success');
+  try {
+    await addDoc(collection(db, 'metas'), {
+      userId: currentUser.uid,
+      nome: document.getElementById('meta-nome').value,
+      valor: parseFloat(document.getElementById('meta-valor').value),
+      guardado: parseFloat(document.getElementById('meta-guardado').value) || 0,
+      economia: parseFloat(document.getElementById('meta-economia').value) || null,
+      createdAt: serverTimestamp()
+    });
+    
+    closeModal('modal-meta');
+    e.target.reset();
+    await loadAllData();
+    showToast('Meta adicionada!', 'success');
+  } catch (error) {
+    showToast('Erro ao salvar: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
+  }
 });
 
 window.deleteMeta = async (id) => {
   if (confirm('Tem certeza que deseja excluir?')) {
-    await deleteDoc(doc(db, 'metas', id));
-    loadAllData();
-    showToast('Meta excluída!', 'success');
+    toggleLoading(true);
+    try {
+      await deleteDoc(doc(db, 'metas', id));
+      await loadAllData();
+      showToast('Meta excluída!', 'success');
+    } catch (error) {
+      showToast('Erro ao excluir: ' + error.message, 'error');
+    } finally {
+      toggleLoading(false);
+    }
   }
 };
 
@@ -543,27 +660,41 @@ document.getElementById('add-investimento-btn').addEventListener('click', () => 
 
 document.getElementById('form-investimento').addEventListener('submit', async (e) => {
   e.preventDefault();
+  toggleLoading(true);
   
-  await addDoc(collection(db, 'investimentos'), {
-    userId: currentUser.uid,
-    descricao: document.getElementById('invest-desc').value,
-    valor: parseFloat(document.getElementById('invest-valor').value),
-    tipo: document.getElementById('invest-tipo').value,
-    data: document.getElementById('invest-data').value,
-    createdAt: serverTimestamp()
-  });
-  
-  closeModal('modal-investimento');
-  e.target.reset();
-  loadAllData();
-  showToast('Investimento adicionado!', 'success');
+  try {
+    await addDoc(collection(db, 'investimentos'), {
+      userId: currentUser.uid,
+      descricao: document.getElementById('invest-desc').value,
+      valor: parseFloat(document.getElementById('invest-valor').value),
+      tipo: document.getElementById('invest-tipo').value,
+      data: document.getElementById('invest-data').value,
+      createdAt: serverTimestamp()
+    });
+    
+    closeModal('modal-investimento');
+    e.target.reset();
+    await loadAllData();
+    showToast('Investimento adicionado!', 'success');
+  } catch (error) {
+    showToast('Erro ao salvar: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
+  }
 });
 
 window.deleteInvestimento = async (id) => {
   if (confirm('Tem certeza que deseja excluir?')) {
-    await deleteDoc(doc(db, 'investimentos', id));
-    loadAllData();
-    showToast('Investimento excluído!', 'success');
+    toggleLoading(true);
+    try {
+      await deleteDoc(doc(db, 'investimentos', id));
+      await loadAllData();
+      showToast('Investimento excluído!', 'success');
+    } catch (error) {
+      showToast('Erro ao excluir: ' + error.message, 'error');
+    } finally {
+      toggleLoading(false);
+    }
   }
 };
 
@@ -574,7 +705,6 @@ async function updateDashboard() {
   
   const { startDate, endDate } = getMonthRange(currentMonth);
   
-  // Load all data for calculations
   const [receitasSnap, fixasSnap, variaveisSnap, investimentosSnap] = await Promise.all([
     getDocs(query(collection(db, 'receitas'), where('userId', '==', currentUser.uid), where('data', '>=', startDate), where('data', '<=', endDate))),
     getDocs(query(collection(db, 'fixas'), where('userId', '==', currentUser.uid))),
@@ -589,7 +719,6 @@ async function updateDashboard() {
   const totalSaidas = totalFixas + totalVariaveis;
   const saldo = totalEntradas - totalSaidas;
   
-  // Update cards
   document.getElementById('total-entradas').textContent = formatCurrency(totalEntradas);
   document.getElementById('total-saidas').textContent = formatCurrency(totalSaidas);
   document.getElementById('saldo-restante').textContent = formatCurrency(saldo);
@@ -597,19 +726,17 @@ async function updateDashboard() {
   document.getElementById('gastos-variaveis').textContent = formatCurrency(totalVariaveis);
   document.getElementById('investido-mes').textContent = formatCurrency(totalInvestimentos);
   
-  // Update thermometer
   const thermometerFill = document.getElementById('thermometer-fill');
   const financialMessage = document.getElementById('financial-message');
   
   let percentage = 0;
   if (totalEntradas > 0) {
-    percentage = ((totalEntradas - totalSaidas) / totalEntradas) * 100 + 50; // Shift to center
+    percentage = ((totalEntradas - totalSaidas) / totalEntradas) * 100 + 50;
     percentage = Math.max(0, Math.min(100, percentage));
   }
   
   thermometerFill.style.width = `${percentage}%`;
   
-  // Determine health status
   if (saldo >= 0) {
     financialMessage.className = 'financial-message positive';
     financialMessage.textContent = 'Você está indo bem, continue assim! Que tal investir ou aplicar em uma meta?';
@@ -618,7 +745,6 @@ async function updateDashboard() {
     financialMessage.textContent = 'Atenção! Seus gastos estão maiores que sua renda. Reveja suas despesas.';
   }
   
-  // Update chart
   updateChart(totalFixas, totalVariaveis);
 }
 
@@ -659,25 +785,32 @@ function updateChart(fixas, variaveis) {
 
 document.getElementById('export-data').addEventListener('click', async () => {
   if (!currentUser) return;
+  toggleLoading(true);
   
-  const collections = ['receitas', 'fixas', 'variaveis', 'metas', 'investimentos'];
-  const backup = { userId: currentUser.uid, exportDate: new Date().toISOString(), data: {} };
-  
-  for (const col of collections) {
-    const q = query(collection(db, col), where('userId', '==', currentUser.uid));
-    const snapshot = await getDocs(q);
-    backup.data[col] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  try {
+    const collections = ['receitas', 'fixas', 'variaveis', 'metas', 'investimentos'];
+    const backup = { userId: currentUser.uid, exportDate: new Date().toISOString(), data: {} };
+    
+    for (const col of collections) {
+      const q = query(collection(db, col), where('userId', '==', currentUser.uid));
+      const snapshot = await getDocs(q);
+      backup.data[col] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+    
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup-financeiro-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    showToast('Backup exportado com sucesso!', 'success');
+  } catch (error) {
+    showToast('Erro no backup: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
   }
-  
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `backup-financeiro-${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  showToast('Backup exportado com sucesso!', 'success');
 });
 
 document.getElementById('import-data').addEventListener('click', async () => {
@@ -689,6 +822,7 @@ document.getElementById('import-data').addEventListener('click', async () => {
     return;
   }
   
+  toggleLoading(true);
   try {
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -700,7 +834,6 @@ document.getElementById('import-data').addEventListener('click', async () => {
       }
       
       let imported = 0;
-      
       for (const [collectionName, items] of Object.entries(backup.data)) {
         for (const item of items) {
           const { id, ...data } = item;
@@ -711,11 +844,13 @@ document.getElementById('import-data').addEventListener('click', async () => {
       }
       
       showToast(`${imported} itens importados com sucesso!`, 'success');
-      loadAllData();
+      await loadAllData();
     };
     reader.readAsText(file);
   } catch (error) {
     showToast('Erro ao importar: ' + error.message, 'error');
+  } finally {
+    toggleLoading(false);
   }
 });
 
@@ -742,41 +877,6 @@ document.querySelectorAll('.modal').forEach(modal => {
     }
   });
 });
-
-// ==================== UTILITIES ====================
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-}
-
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('pt-BR');
-}
-
-function capitalizeFirst(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function showToast(message, type = 'success') {
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `
-    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-    <span>${message}</span>
-  `;
-  document.body.appendChild(toast);
-  
-  setTimeout(() => {
-    toast.remove();
-  }, 3000);
-}
 
 // Initialize
 updateMonthDisplay();
