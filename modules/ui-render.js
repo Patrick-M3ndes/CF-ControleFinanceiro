@@ -1,4 +1,7 @@
 // modules/ui-render.js - Lógica de Renderização do DOM
+// TODO: Refatorar as templates strings para remover os atributos 'onclick' (window.startEdit, window.deleteItem, etc.)
+// e utilizar addEventListener diretamente nos elementos após a renderização para maior segurança e encapsulamento.
+
 import { 
   appState, 
   refreshIcons 
@@ -17,6 +20,37 @@ export function renderAll() {
   renderMetas();
   renderInvestimentos();
   refreshIcons();
+}
+
+/**
+ * Altera o título e estado visual dos modais (Novo vs Editar)
+ * @param {string} type - Tipo da coleção (receitas, fixas, variaveis, metas, investimentos)
+ * @param {string} mode - 'new' ou 'edit'
+ */
+export function setModalMode(type, mode) {
+  const modalIdMap = {
+    receitas: 'modal-receita',
+    fixas: 'modal-fixa',
+    variaveis: 'modal-variavel',
+    metas: 'modal-meta',
+    investimentos: 'modal-investimento'
+  };
+
+  const modalId = modalIdMap[type] || `modal-${type}`;
+  const h3 = document.querySelector(`#${modalId} h3`);
+  if (!h3) return;
+
+  const titles = {
+    receitas: { new: 'Nova Receita', edit: 'Editar Receita' },
+    fixas: { new: 'Nova Despesa Fixa', edit: 'Editar Despesa Fixa' },
+    variaveis: { new: 'Nova Despesa Variável', edit: 'Editar Despesa Variável' },
+    metas: { new: 'Nova Meta Financeira', edit: 'Editar Meta Financeira' },
+    investimentos: { new: 'Novo Aporte', edit: 'Editar Investimento' }
+  };
+
+  if (titles[type]) {
+    h3.textContent = titles[type][mode];
+  }
 }
 
 export function renderReceitas() {

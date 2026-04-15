@@ -21,7 +21,7 @@ import {
   getMonthRange, 
   getYearMonthKey 
 } from './state.js';
-import { renderAll } from './ui-render.js';
+import { renderAll, setModalMode } from './ui-render.js';
 import { updateDashboard } from './dashboard.js';
 import { validateForm } from './validation.js';
 
@@ -74,35 +74,35 @@ export async function loadMonthData(showLoader = true) {
   } finally { if (showLoader) toggleLoading(false); }
 }
 
-// Expõe para o escopo global para compatibilidade com o HTML gerado
+// ==================== GLOBAL FUNCTIONS (DEBT) ====================
+// TODO: Migrar window.startEdit, window.deleteItem e window.toggleFixa
+// para addEventListeners dentro do ui-render.js para evitar poluição do objeto global window.
+
 window.startEdit = (col, id) => {
   const item = appState[col].find(i => i.id === id);
   if (!item) return;
 
   appState.editingItem = { id, collection: col };
   
+  // Define o modal em modo de edição (Centralizado no ui-render.js)
+  setModalMode(col, 'edit');
+
   if (col === 'receitas') {
     document.getElementById('receita-desc').value = item.descricao;
     document.getElementById('receita-valor').value = item.valor;
     document.getElementById('receita-data').value = item.data;
     document.getElementById('receita-tipo').value = item.tipo;
-    const h3 = document.querySelector('#modal-receita h3');
-    if (h3) h3.textContent = 'Editar Receita';
     document.getElementById('modal-receita').classList.add('active');
   } else if (col === 'fixas') {
     document.getElementById('fixa-nome').value = item.nome;
     document.getElementById('fixa-valor').value = item.valor;
     document.getElementById('fixa-vencimento').value = item.vencimento;
-    const h3 = document.querySelector('#modal-fixa h3');
-    if (h3) h3.textContent = 'Editar Despesa Fixa';
     document.getElementById('modal-fixa').classList.add('active');
   } else if (col === 'variaveis') {
     document.getElementById('variavel-desc').value = item.descricao;
     document.getElementById('variavel-valor').value = item.valor;
     document.getElementById('variavel-categoria').value = item.categoria;
     document.getElementById('variavel-data').value = item.data;
-    const h3 = document.querySelector('#modal-variavel h3');
-    if (h3) h3.textContent = 'Editar Despesa Variável';
     document.getElementById('modal-variavel').classList.add('active');
   }
 };
@@ -134,6 +134,7 @@ window.toggleFixa = async (fixaId, isPago) => {
   } catch (error) { showToast('Erro: ' + error.message, 'error'); }
   finally { toggleLoading(false); }
 };
+// =================================================================
 
 export function setupForms() {
   const handleForm = (formId, modalId, col, dataFn) => {
@@ -153,6 +154,10 @@ export function setupForms() {
           toggleLoading(false);
           return;
         }
+
+        // Sanitização de dados (Limpeza de espaços em branco)
+        if (data.descricao) data.descricao = data.descricao.trim();
+        if (data.nome) data.nome = data.nome.trim();
         
         if (appState.editingItem.id && appState.editingItem.collection === col) {
           // MODO EDIÇÃO (UPDATE)
@@ -172,6 +177,7 @@ export function setupForms() {
         
         showToast('Salvo com sucesso!', 'success');
       } catch (error) { 
+        console.error('Erro Firestore (api.js):', error);
         showToast('Erro ao salvar: ' + error.message, 'error'); 
       } finally { 
         toggleLoading(false); 

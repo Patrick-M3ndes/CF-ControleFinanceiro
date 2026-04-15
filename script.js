@@ -7,11 +7,13 @@ import {
   setupBackupHandlers 
 } from './modules/api.js';
 import { 
+  appState,
   currentMonth, 
   setCurrentMonth, 
   updateMonthDisplay, 
   refreshIcons 
 } from './modules/state.js';
+import { setModalMode } from './modules/ui-render.js';
 
 // ==================== INITIALIZATION ====================
 
@@ -108,21 +110,12 @@ function setupModals() {
         const modal = el.closest('.modal');
         modal.classList.remove('active');
         
-        // Limpa estado de edição ao fechar (usando import dinâmico para garantir acesso ao appState)
-        import('./modules/state.js').then(m => {
-          m.appState.editingItem = { id: null, collection: null };
-        });
+        // Limpa estado de edição ao fechar (Acesso direto para performance)
+        appState.editingItem = { id: null, collection: null };
 
-        // Restaura títulos originais
-        const h3 = modal.querySelector('h3');
-        if (h3) {
-          const type = modal.id.replace('modal-', '');
-          if (type === 'receita') h3.textContent = 'Nova Receita';
-          if (type === 'fixa') h3.textContent = 'Nova Despesa Fixa';
-          if (type === 'variavel') h3.textContent = 'Nova Despesa Variável';
-          if (type === 'meta') h3.textContent = 'Nova Meta Financeira';
-          if (type === 'investimento') h3.textContent = 'Novo Aporte';
-        }
+        // Restaura títulos originais (Centralizado no ui-render.js)
+        const type = modal.id.replace('modal-', '');
+        setModalMode(type, 'new');
       }
     });
   });
