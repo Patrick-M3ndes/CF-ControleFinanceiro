@@ -1,11 +1,10 @@
-// utils.js - Funções de utilidade para o Controle Financeiro
+// utils.js - Funções de utilidade para o Controle Financeiro Premium
 
 export function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
 export function formatDate(dateString) {
-  // Converte data YYYY-MM-DD para o objeto Date local sem problemas de fuso horário
   const [year, month, day] = dateString.split('-');
   const date = new Date(year, month - 1, day);
   return date.toLocaleDateString('pt-BR');
@@ -26,14 +25,28 @@ export function escapeHtml(text) {
 export function showToast(message, type = 'success') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
+  
+  // Ícones Lucide para Toasts
+  const iconName = type === 'success' ? 'check-circle' : 'alert-circle';
+  
   toast.innerHTML = `
-    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+    <i data-lucide="${iconName}"></i>
     <span>${message}</span>
   `;
   document.body.appendChild(toast);
   
+  // Inicializa o ícone do novo toast
+  if (window.lucide) {
+    window.lucide.createIcons({
+      attrs: {
+        'stroke-width': 2.5
+      }
+    });
+  }
+  
   setTimeout(() => {
     toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
     setTimeout(() => toast.remove(), 500);
   }, 3000);
 }

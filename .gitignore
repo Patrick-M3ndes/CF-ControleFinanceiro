@@ -70,3 +70,10 @@ htmlcov/
 *.tar.xz
 *.tar.zst
 ```
+# Gemini & Backups
+GEMINI.md
+backup/
+.agents/
+.firebase/
+skills-lock.json
+config.js

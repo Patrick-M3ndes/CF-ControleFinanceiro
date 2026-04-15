@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Funções de Segurança
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(data) {
+      return isAuthenticated() && data.userId == request.auth.uid;
+    }
+
+    function isValidAmount(val) {
+      return val is number && val > 0;
+    }
+
+    function isValidDate(d) {
+      return d is string && d.size() >= 10;
+    }
+
+    // --- COLEÇÕES ESPECÍFICAS ---
+
+    match /receitas/{id} {
+      allow read, delete: if isOwner(resource.data);
+      allow create, update: if isOwner(request.resource.data) 
+        && isValidAmount(request.resource.data.valor)
+        && isValidDate(request.resource.data.data);
+    }
+    
+    match /fixas/{id} {
+      allow read, delete: if isOwner(resource.data);
+      allow create, update: if isOwner(request.resource.data)
+        && isValidAmount(request.resource.data.valor)
+        && request.resource.data.vencimento is string;
+    }
+    
+    match /variaveis/{id} {
+      allow read, delete: if isOwner(resource.data);
+      allow create, update: if isOwner(request.resource.data)
+        && isValidAmount(request.resource.data.valor)
+        && isValidDate(request.resource.data.data)
+        && request.resource.data.categoria in ['alimentacao', 'transporte', 'lazer', 'saude', 'compras', 'outros'];
+    }
+    
+    match /metas/{id} {
+      allow read, delete: if isOwner(resource.data);
+      allow create, update: if isOwner(request.resource.data)
+        && request.resource.data.valor is number && request.resource.data.valor > 0
+        && request.resource.data.guardado is number;
+    }
+    
+    match /investimentos/{id} {
+      allow read, delete: if isOwner(resource.data);
+      allow create, update: if isOwner(request.resource.data)
+        && isValidAmount(request.resource.data.valor)
+        && isValidDate(request.resource.data.data);
+    }
+    
+    match /pagamentos_fixas/{id} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Bloqueia qualquer outra coleção não listada acima
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

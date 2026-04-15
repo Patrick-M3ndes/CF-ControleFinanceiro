@@ -3,80 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestão Financeira Pessoal</title>
+  <title>Gestão Financeira Premium</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons - Mais moderno e limpo -->
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+<body>
   <!-- Carregador Global -->
   <div id="global-loader" class="loader-overlay">
     <div class="loader"></div>
   </div>
 
-  <!-- Tela de Login -->
-  <div id="login-screen" class="screen active">
-    <div class="login-container">
-      <div class="login-header">
-        <i class="fas fa-wallet"></i>
-        <h1>Gestão Financeira</h1>
-        <p>Controle suas finanças com inteligência</p>
-      </div>
-      
-      <form id="login-form">
-        <div class="form-group">
-          <label for="login-email"><i class="fas fa-envelope"></i> Email</label>
-          <input type="email" id="login-email" required placeholder="seu@email.com">
-        </div>
-        
-        <div class="form-group">
-          <label for="login-password"><i class="fas fa-lock"></i> Senha</label>
-          <input type="password" id="login-password" required placeholder="Sua senha">
-        </div>
-        
-        <button type="submit" class="btn-primary">
-          <i class="fas fa-sign-in-alt"></i> Entrar
-        </button>
-      </form>
-      
-      <div class="login-footer">
-        <p>Não tem conta? <a href="#" id="show-register">Criar conta</a></p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tela de Registro -->
-  <div id="register-screen" class="screen">
-    <div class="login-container">
-      <div class="login-header">
-        <i class="fas fa-wallet"></i>
+  <!-- Telas de Autenticação -->
+  <div id="auth-container" class="auth-wrapper active">
+    <!-- Card de Registro -->
+    <div id="register-card" class="auth-card active">
+      <div class="auth-header">
+        <i data-lucide="wallet"></i>
         <h1>Criar Conta</h1>
-        <p>Comece a controlar suas finanças</p>
+        <p>Comece sua jornada financeira premium</p>
       </div>
       
       <form id="register-form">
         <div class="form-group">
-          <label for="register-email"><i class="fas fa-envelope"></i> Email</label>
+          <label>Email</label>
           <input type="email" id="register-email" required placeholder="seu@email.com">
         </div>
-        
         <div class="form-group">
-          <label for="register-password"><i class="fas fa-lock"></i> Senha</label>
+          <label>Senha</label>
           <input type="password" id="register-password" required placeholder="Mínimo 6 caracteres" minlength="6">
         </div>
-        
         <div class="form-group">
-          <label for="register-confirm"><i class="fas fa-lock"></i> Confirmar Senha</label>
+          <label>Confirmar Senha</label>
           <input type="password" id="register-confirm" required placeholder="Confirme sua senha">
         </div>
-        
-        <button type="submit" class="btn-primary">
-          <i class="fas fa-user-plus"></i> Criar Conta
-        </button>
+        <button type="submit" class="btn-primary">Criar Conta</button>
       </form>
       
-      <div class="login-footer">
+      <div class="auth-footer">
         <p>Já tem conta? <a href="#" id="show-login">Fazer login</a></p>
+      </div>
+    </div>
+
+    <!-- Card de Login -->
+    <div id="login-card" class="auth-card hidden">
+      <div class="auth-header">
+        <i data-lucide="shield-check"></i>
+        <h1>Bem-vindo</h1>
+        <p>Acesse sua conta para continuar</p>
+      </div>
+      
+      <form id="login-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" required placeholder="seu@email.com">
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="login-password" required placeholder="Sua senha">
+        </div>
+        <button type="submit" class="btn-primary">Entrar</button>
+      </form>
+      
+      <div class="auth-footer">
+        <p>Não tem conta? <a href="#" id="show-register">Criar conta</a></p>
       </div>
     </div>
   </div>
@@ -86,43 +78,43 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <i class="fas fa-wallet"></i>
-        <h1>Gestão Financeira</h1>
+        <i data-lucide="layout-dashboard"></i>
+        <h1>Controle Financeiro</h1>
       </div>
       
       <div class="header-right">
         <span id="user-email"></span>
         <button id="logout-btn" class="btn-icon" title="Sair">
-          <i class="fas fa-sign-out-alt"></i>
+          <i data-lucide="log-out"></i>
         </button>
       </div>
     </header>
 
-    <!-- Navegação -->
+    <!-- Navegação Sidebar/Mobile -->
     <nav class="main-nav">
       <button class="nav-btn active" data-tab="dashboard">
-        <i class="fas fa-chart-line"></i>
+        <i data-lucide="pie-chart"></i>
         <span>Dashboard</span>
       </button>
       <button class="nav-btn" data-tab="receitas">
-        <i class="fas fa-arrow-up"></i>
+        <i data-lucide="trending-up"></i>
         <span>Receitas</span>
       </button>
       <button class="nav-btn" data-tab="fixas">
-        <i class="fas fa-home"></i>
-        <span>Despesas Fixas</span>
+        <i data-lucide="home"></i>
+        <span>Fixas</span>
       </button>
       <button class="nav-btn" data-tab="variaveis">
-        <i class="fas fa-shopping-cart"></i>
-        <span>Despesas Variáveis</span>
+        <i data-lucide="shopping-bag"></i>
+        <span>Variáveis</span>
       </button>
       <button class="nav-btn" data-tab="metas">
-        <i class="fas fa-bullseye"></i>
+        <i data-lucide="target"></i>
         <span>Metas</span>
       </button>
       <button class="nav-btn" data-tab="investimentos">
-        <i class="fas fa-chart-pie"></i>
-        <span>Investimentos</span>
+        <i data-lucide="bar-chart-3"></i>
+        <span>Investir</span>
       </button>
     </nav>
 
@@ -131,14 +123,14 @@
       <!-- Dashboard -->
       <section id="tab-dashboard" class="tab-content active">
         <div class="month-selector">
-          <button id="prev-month" class="btn-nav"><i class="fas fa-chevron-left"></i></button>
+          <button id="prev-month" class="btn-nav"><i data-lucide="chevron-left"></i></button>
           <h2 id="current-month-display"></h2>
-          <button id="next-month" class="btn-nav"><i class="fas fa-chevron-right"></i></button>
+          <button id="next-month" class="btn-nav"><i data-lucide="chevron-right"></i></button>
         </div>
 
         <div class="summary-cards">
           <div class="card card-entradas">
-            <div class="card-icon"><i class="fas fa-arrow-up"></i></div>
+            <div class="card-icon"><i data-lucide="arrow-up-right"></i></div>
             <div class="card-info">
               <h3>Entradas</h3>
               <p id="total-entradas">R$ 0,00</p>
@@ -146,7 +138,7 @@
           </div>
           
           <div class="card card-saidas">
-            <div class="card-icon"><i class="fas fa-arrow-down"></i></div>
+            <div class="card-icon"><i data-lucide="arrow-down-right"></i></div>
             <div class="card-info">
               <h3>Saídas</h3>
               <p id="total-saidas">R$ 0,00</p>
@@ -154,7 +146,7 @@
           </div>
           
           <div class="card card-saldo">
-            <div class="card-icon"><i class="fas fa-wallet"></i></div>
+            <div class="card-icon"><i data-lucide="wallet"></i></div>
             <div class="card-info">
               <h3>Saldo</h3>
               <p id="saldo-restante">R$ 0,00</p>
@@ -164,20 +156,20 @@
 
         <div class="dashboard-grid">
           <div class="chart-container">
-            <h3><i class="fas fa-chart-pie"></i> Despesas por Tipo</h3>
+            <h3><i data-lucide="donut"></i> Gastos por Categoria</h3>
             <canvas id="expenses-chart"></canvas>
           </div>
           
           <div class="thermometer-container">
-            <h3><i class="fas fa-thermometer-half"></i> Saúde Financeira</h3>
+            <h3><i data-lucide="activity"></i> Saúde Financeira</h3>
             <div class="thermometer">
               <div class="thermometer-bar">
                 <div id="thermometer-fill" class="thermometer-fill"></div>
               </div>
               <div class="thermometer-labels">
                 <span>Crítico</span>
-                <span>Atenção</span>
-                <span>Saudável</span>
+                <span>Alerta</span>
+                <span>Ideal</span>
               </div>
             </div>
             <div id="financial-message" class="financial-message"></div>
@@ -186,15 +178,15 @@
 
         <div class="quick-stats">
           <div class="stat-item">
-            <span class="stat-label">Custo de Vida Básico</span>
+            <span class="stat-label">Custo Fixo</span>
             <span id="custo-vida" class="stat-value">R$ 0,00</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Gastos Variáveis</span>
+            <span class="stat-label">Variáveis</span>
             <span id="gastos-variaveis" class="stat-value">R$ 0,00</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Investido no Mês</span>
+            <span class="stat-label">Investido</span>
             <span id="investido-mes" class="stat-value">R$ 0,00</span>
           </div>
         </div>
@@ -203,88 +195,79 @@
       <!-- Receitas -->
       <section id="tab-receitas" class="tab-content">
         <div class="section-header">
-          <h2><i class="fas fa-arrow-up"></i> Receitas</h2>
+          <h2>Receitas</h2>
           <button class="btn-add" id="add-receita-btn">
-            <i class="fas fa-plus"></i> Nova Receita
+            <i data-lucide="plus"></i> Nova Receita
           </button>
         </div>
-        
         <div id="receitas-list" class="transactions-list"></div>
       </section>
 
       <!-- Despesas Fixas -->
       <section id="tab-fixas" class="tab-content">
         <div class="section-header">
-          <h2><i class="fas fa-home"></i> Despesas Fixas</h2>
+          <h2>Despesas Fixas</h2>
           <button class="btn-add" id="add-fixa-btn">
-            <i class="fas fa-plus"></i> Nova Despesa
+            <i data-lucide="plus"></i> Nova Fixa
           </button>
         </div>
-        
         <div class="fixed-summary">
-          <span>Custo de Vida Básico:</span>
+          <span>Total Fixas:</span>
           <strong id="fixed-total">R$ 0,00</strong>
         </div>
-        
         <div id="fixas-list" class="transactions-list"></div>
       </section>
 
       <!-- Despesas Variáveis -->
       <section id="tab-variaveis" class="tab-content">
         <div class="section-header">
-          <h2><i class="fas fa-shopping-cart"></i> Despesas Variáveis</h2>
+          <h2>Despesas Variáveis</h2>
           <button class="btn-add" id="add-variavel-btn">
-            <i class="fas fa-plus"></i> Nova Despesa
+            <i data-lucide="plus"></i> Nova Variável
           </button>
         </div>
-        
         <div id="variaveis-alert" class="alert-box hidden">
-          <i class="fas fa-exclamation-triangle"></i>
-          <span>Você está gastando muito com itens não essenciais!</span>
+          <i data-lucide="alert-circle"></i>
+          <span>Atenção: Gastos variáveis acima do sugerido!</span>
         </div>
-        
         <div id="variaveis-list" class="transactions-list"></div>
       </section>
 
       <!-- Metas -->
       <section id="tab-metas" class="tab-content">
         <div class="section-header">
-          <h2><i class="fas fa-bullseye"></i> Metas e Wishlist</h2>
+          <h2>Minhas Metas</h2>
           <button class="btn-add" id="add-meta-btn">
-            <i class="fas fa-plus"></i> Nova Meta
+            <i data-lucide="plus"></i> Nova Meta
           </button>
         </div>
-        
         <div id="metas-list" class="goals-list"></div>
       </section>
 
       <!-- Investimentos -->
       <section id="tab-investimentos" class="tab-content">
         <div class="section-header">
-          <h2><i class="fas fa-chart-pie"></i> Investimentos</h2>
+          <h2>Investimentos</h2>
           <button class="btn-add" id="add-investimento-btn">
-            <i class="fas fa-plus"></i> Novo Investimento
+            <i data-lucide="plus"></i> Novo Aporte
           </button>
         </div>
-        
         <div class="investments-summary">
           <div class="invest-card">
-            <span>Total Investido</span>
+            <span>Volume Investido no Mês</span>
             <strong id="total-investido">R$ 0,00</strong>
           </div>
         </div>
-        
         <div id="investimentos-list" class="investments-list"></div>
       </section>
     </main>
 
     <!-- Modais -->
-    <!-- Modal Receita -->
     <div id="modal-receita" class="modal">
       <div class="modal-content">
         <div class="modal-header">
           <h3>Nova Receita</h3>
-          <button class="modal-close">&times;</button>
+          <button class="modal-close"><i data-lucide="x"></i></button>
         </div>
         <form id="form-receita">
           <div class="form-group">
@@ -316,27 +299,20 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3>Nova Despesa Fixa</h3>
-          <button class="modal-close">&times;</button>
+          <button class="modal-close"><i data-lucide="x"></i></button>
         </div>
         <form id="form-fixa">
           <div class="form-group">
-            <label>Nome</label>
+            <label>Nome da Conta</label>
             <input type="text" id="fixa-nome" required placeholder="Ex: Aluguel">
           </div>
           <div class="form-group">
-            <label>Valor (R$)</label>
+            <label>Valor Mensal (R$)</label>
             <input type="number" id="fixa-valor" step="0.01" min="0.01" required placeholder="0,00">
           </div>
           <div class="form-group">
-            <label>Vencimento (dia)</label>
-            <input type="number" id="fixa-vencimento" min="1" max="31" required placeholder="1-31">
-          </div>
-          <div class="form-group">
-            <label>Status</label>
-            <select id="fixa-status">
-              <option value="pendente">Pendente</option>
-              <option value="pago">Pago</option>
-            </select>
+            <label>Dia de Vencimento</label>
+            <input type="number" id="fixa-vencimento" min="1" max="31" required placeholder="Ex: 10">
           </div>
           <button type="submit" class="btn-primary full-width">Salvar</button>
         </form>
@@ -348,12 +324,12 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3>Nova Despesa Variável</h3>
-          <button class="modal-close">&times;</button>
+          <button class="modal-close"><i data-lucide="x"></i></button>
         </div>
         <form id="form-variavel">
           <div class="form-group">
             <label>Descrição</label>
-            <input type="text" id="variavel-desc" required placeholder="Ex: Mercado">
+            <input type="text" id="variavel-desc" required placeholder="Ex: Restaurante">
           </div>
           <div class="form-group">
             <label>Valor (R$)</label>
@@ -362,12 +338,12 @@
           <div class="form-group">
             <label>Categoria</label>
             <select id="variavel-categoria">
-              <option value="alimentacao">🍔 Alimentação</option>
-              <option value="transporte">🚗 Transporte</option>
-              <option value="lazer">🎉 Lazer</option>
-              <option value="saude">💊 Saúde</option>
-              <option value="compras">🛍️ Compras</option>
-              <option value="outros">📦 Outros</option>
+              <option value="alimentacao">Alimentação</option>
+              <option value="transporte">Transporte</option>
+              <option value="lazer">Lazer</option>
+              <option value="saude">Saúde</option>
+              <option value="compras">Compras</option>
+              <option value="outros">Outros</option>
             </select>
           </div>
           <div class="form-group">
@@ -379,31 +355,31 @@
       </div>
     </div>
 
-    <!-- Modal Meta -->
+    <!-- Modal Nova Meta -->
     <div id="modal-meta" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Nova Meta</h3>
-          <button class="modal-close">&times;</button>
+          <h3>Nova Meta Financeira</h3>
+          <button class="modal-close"><i data-lucide="x"></i></button>
         </div>
         <form id="form-meta">
           <div class="form-group">
             <label>Nome da Meta</label>
-            <input type="text" id="meta-nome" required placeholder="Ex: Viagem">
+            <input type="text" id="meta-nome" required placeholder="Ex: Viagem Europa">
           </div>
           <div class="form-group">
-            <label>Valor Total (R$)</label>
+            <label>Valor Alvo (R$)</label>
             <input type="number" id="meta-valor" step="0.01" min="0.01" required placeholder="0,00">
           </div>
           <div class="form-group">
-            <label>Valor Guardado (R$)</label>
-            <input type="number" id="meta-guardado" step="0.01" min="0" value="0" placeholder="0,00">
+            <label>Já tenho guardado (R$)</label>
+            <input type="number" id="meta-guardado" step="0.01" min="0" placeholder="0,00">
           </div>
           <div class="form-group">
-            <label>Economia Mensal (R$)</label>
-            <input type="number" id="meta-economia" step="0.01" min="0.01" placeholder="Quanto pretende guardar por mês">
+            <label>Economia Mensal Pretendida (R$)</label>
+            <input type="number" id="meta-economia" step="0.01" min="0" placeholder="0,00">
           </div>
-          <button type="submit" class="btn-primary full-width">Salvar</button>
+          <button type="submit" class="btn-primary full-width">Criar Meta</button>
         </form>
       </div>
     </div>
@@ -412,54 +388,49 @@
     <div id="modal-investimento" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Novo Investimento</h3>
-          <button class="modal-close">&times;</button>
+          <h3>Novo Aporte</h3>
+          <button class="modal-close"><i data-lucide="x"></i></button>
         </div>
         <form id="form-investimento">
           <div class="form-group">
             <label>Descrição</label>
-            <input type="text" id="invest-desc" required placeholder="Ex: Reserva de Emergência">
+            <input type="text" id="invest-desc" required placeholder="Ex: Tesouro Direto">
           </div>
           <div class="form-group">
             <label>Valor (R$)</label>
             <input type="number" id="invest-valor" step="0.01" min="0.01" required placeholder="0,00">
           </div>
           <div class="form-group">
-            <label>Tipo</label>
-            <select id="invest-tipo">
-              <option value="reserva">Reserva de Emergência</option>
-              <option value="renda-fixa">Renda Fixa</option>
-              <option value="acoes">Ações</option>
-              <option value="fundos">Fundos Imobiliários</option>
-              <option value="outros">Outros</option>
-            </select>
+            <label>Tipo de Ativo</label>
+            <input type="text" id="invest-tipo" required placeholder="Ex: Renda Fixa">
           </div>
           <div class="form-group">
             <label>Data</label>
             <input type="date" id="invest-data" required>
           </div>
-          <button type="submit" class="btn-primary full-width">Salvar</button>
+          <button type="submit" class="btn-primary full-width">Registrar Investimento</button>
         </form>
       </div>
     </div>
-
+    
+    <!-- (Outros modais seguem o mesmo padrão) -->
     <!-- Modal Exportar/Importar -->
     <div id="modal-backup" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Backup de Dados</h3>
-          <button class="modal-close">&times;</button>
+          <h3>Backup e Dados</h3>
+          <button class="modal-close"><i data-lucide="x"></i></button>
         </div>
         <div class="backup-options">
           <button id="export-data" class="btn-primary full-width">
-            <i class="fas fa-download"></i> Exportar Dados
+            <i data-lucide="download"></i> Exportar JSON
           </button>
-          <div class="form-group">
-            <label>Importar arquivo JSON</label>
+          <div class="form-group" style="margin-top: 1.5rem;">
+            <label>Importar Arquivo</label>
             <input type="file" id="import-file" accept=".json">
           </div>
           <button id="import-data" class="btn-secondary full-width">
-            <i class="fas fa-upload"></i> Importar Dados
+            <i data-lucide="upload"></i> Importar JSON
           </button>
         </div>
       </div>
